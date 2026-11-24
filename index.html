@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planet Burger and Pizza</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#241f5c">
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;800&family=Noto+Sans+Ethiopic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#241f5c;--bg:#f2f0ff;--card:#fff;--red:#e5391f;--sun:#ffc531;--mute:#6b6891}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans Ethiopic",system-ui,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:90px}
+h1,h2,.price,button{font-family:"Baloo 2","Noto Sans Ethiopic",sans-serif}
+header{background:var(--ink);color:#fff;padding:22px 16px 26px;text-align:center;border-radius:0 0 40px 40px}
+header h1{margin:0;font-size:2rem;font-weight:800;letter-spacing:.5px}
+header h1 span{color:var(--sun)}
+header p{margin:4px 0 0;opacity:.8;font-size:.95rem}
+nav{display:flex;gap:8px;padding:14px 16px 0;overflow-x:auto}
+nav button{border:2px solid var(--ink);background:none;color:var(--ink);padding:6px 16px;border-radius:99px;font-size:1rem;font-weight:800;white-space:nowrap}
+nav button.on{background:var(--ink);color:#fff}
+main{padding:8px 16px;max-width:640px;margin:0 auto}
+h2{margin:18px 0 8px;font-size:1.3rem}
+.item{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--card);padding:12px 14px;border-radius:16px;margin-bottom:10px}
+.item b{display:block}.item small{color:var(--mute)}
+.price{color:var(--red);font-weight:800;font-size:1.1rem}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button,.add{border:0;background:var(--sun);color:var(--ink);font-weight:800;border-radius:12px;font-size:1.1rem}
+.qty button{width:34px;height:34px}.add{padding:8px 14px}
+.qty span{min-width:18px;text-align:center;font-weight:700}
+#bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px;background:var(--bg)}
+#bar button{width:100%;padding:14px;border:0;border-radius:16px;background:var(--red);color:#fff;font-size:1.15rem;font-weight:800}
+#bar button:disabled{background:#b9b6d6}
+dialog{border:0;border-radius:22px;padding:18px;width:min(92vw,480px);max-height:90vh;color:var(--ink)}
+dialog::backdrop{background:rgba(36,31,92,.6)}
+label{display:block;margin:10px 0 4px;font-weight:700;font-size:.9rem}
+input,textarea{width:100%;padding:10px;border:2px solid #d8d5f0;border-radius:12px;font:inherit}
+input:focus,textarea:focus,button:focus-visible{outline:3px solid var(--sun)}
+.row{display:flex;justify-content:space-between;padding:4px 0}
+.tot{border-top:2px dashed #d8d5f0;margin-top:8px;padding-top:8px;font-weight:800}
+.btn{display:block;width:100%;margin-top:10px;padding:12px;border:0;border-radius:14px;font-size:1.05rem;font-weight:800;color:#fff;background:var(--ink)}
+.btn.go{background:#1faa59}.btn.alt{background:#e8e6fa;color:var(--ink)}
+.pay{display:flex;gap:10px;align-items:center;padding:10px;border:2px solid #d8d5f0;border-radius:12px;margin:6px 0;font-weight:700}
+.pay input{width:auto}
+.steps{background:#f2f0ff;border-radius:14px;padding:12px;margin-top:8px;line-height:1.6}
+.steps small{display:block;margin:10px 0 4px;color:var(--mute)}
+#locmsg{font-size:.85rem;color:var(--mute);margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Planet <span>Burger</span> and Pizza</h1>
+  <p>ካሉበት ቦታ ሆነው ያዝዙ</p>
+</header>
+<nav id="tabs"></nav>
+<main id="menu"></main>
+
+<div id="bar"><button id="open" disabled>ጋሪ ባዶ ነው</button></div>
+
+<dialog id="dlg">
+  <h2 style="margin-top:0">ትዕዛዝዎ</h2>
+  <div id="lines"></div>
+  <div class="row tot"><span>ጠቅላላ</span><span id="total"></span></div>
+
+  <label for="name">ስም</label>
+  <input id="name" autocomplete="name">
+  <label for="phone">ስልክ ቁጥር</label>
+  <input id="phone" type="tel" autocomplete="tel" placeholder="09...">
+  <label for="addr">አድራሻ / ምልክት (ለምሳሌ ከቦሌ ሚካኤል አጠገብ)</label>
+  <textarea id="addr" rows="2"></textarea>
+  <button class="btn alt" id="loc" type="button">📍 የአሁኑን ቦታዬን ላክ</button>
+  <div id="locmsg"></div>
+
+  <h2>ክፍያ</h2>
+  <label class="pay"><input type="radio" name="pay" value="tele" checked> በቴሌብር አስቀድሜ እከፍላለሁ</label>
+  <label class="pay"><input type="radio" name="pay" value="cash"> ሲደርስ በጥሬ ገንዘብ</label>
+  <div id="telebox">
+    <div class="steps">
+      <b id="payamt"></b> ወደዚህ ይላኩ፦<br>
+      <b id="tnum"></b> (<span id="tname"></span>)
+      <button class="btn alt" id="copy" type="button">ቁጥሩን ቅዳ</button>
+      <a class="btn alt" href="tel:*127%23" style="text-align:center;text-decoration:none">*127# ደውለው ይክፈሉ</a>
+      <small>ከከፈሉ በኋላ ከቴሌብር የሚመጣውን የግብይት ቁጥር (Transaction ID) እዚህ ያስገቡ፦</small>
+      <input id="txid" placeholder="ለምሳሌ CK12AB34XY" autocapitalize="characters">
+    </div>
+  </div>
+
+  <button class="btn go" id="send" type="button">በ WhatsApp ትዕዛዝ ላክ</button>
+  <button class="btn" id="close" type="button">ተመለስ</button>
+</dialog>
+
+<script>
+// ====== እዚህ ይቀይሩ ======
+const WHATSAPP = "251900000000"; // የሬስቶራንቱ ቁጥር፣ ያለ + (251 ይጀምራል)
+const DELIVERY_FEE = 50;          // የማድረስ ክፍያ (ብር)
+const TELEBIRR_NUMBER = "0900000000";   // የሬስቶራንቱ የቴሌብር ቁጥር ወይም Merchant ቁጥር
+const TELEBIRR_NAME = "Planet Burger and Pizza"; // በቴሌብር ላይ የሚታየው ስም
+
+const MENU = {
+  "በርገር": [
+    ["Classic Burger", "ስጋ፣ ሰላጣ፣ ቲማቲም፣ አይብ", 250],
+    ["Cheese Burger", "ድርብ አይብ", 290],
+    ["Double Planet", "ሁለት ስጋ፣ ልዩ ሶስ", 380],
+    ["Chicken Burger", "የተጠበሰ ዶሮ", 270],
+  ],
+  "ፒዛ": [
+    ["Margherita", "ቲማቲም፣ ሞዛሬላ", 350],
+    ["Pepperoni", "ፔፐሮኒ፣ አይብ", 450],
+    ["Veggie", "አትክልት፣ እንጉዳይ", 380],
+    ["Planet Special", "ስጋ፣ አትክልት፣ አይብ", 520],
+  ],
+  "መጠጥና ጎን": [
+    ["French Fries", "ድንች ጥብስ", 100],
+    ["Coca-Cola", "ቆርቆሮ", 50],
+    ["Fresh Juice", "አቮካዶ / ማንጎ", 90],
+    ["ውሃ", "0.5 ሊትር", 25],
+  ],
+};
+
+const cart = {};   // "ስም" -> ብዛት
+const price = {};
+Object.values(MENU).flat().forEach(([n,,p]) => price[n] = p);
+const $ = id => document.getElementById(id);
+const birr = n => n.toLocaleString("en-US") + " ብር";
+let coords = null;
+
+function renderMenu(){
+  const tabs = $("tabs"), menu = $("menu");
+  tabs.innerHTML = Object.keys(MENU).map((c,i)=>`<button data-c="${c}" class="${i?'':'on'}">${c}</button>`).join("");
+  menu.innerHTML = Object.entries(MENU).map(([c,items])=>
+    `<h2 id="cat-${c}">${c}</h2>` + items.map(([n,d,p])=>
+      `<div class="item"><div><b>${n}</b><small>${d}</small><div class="price">${birr(p)}</div></div>
+       <div class="qty" data-n="${n}"></div></div>`).join("")).join("");
+  tabs.onclick = e => {
+    const c = e.target.dataset.c; if(!c) return;
+    [...tabs.children].forEach(b=>b.classList.toggle("on", b===e.target));
+    $("cat-"+c).scrollIntoView({behavior:"smooth", block:"start"});
+  };
+  menu.onclick = e => {
+    const b = e.target.closest("button"); if(!b) return;
+    const n = b.closest(".qty").dataset.n;
+    cart[n] = Math.max(0, (cart[n]||0) + (b.dataset.d|0));
+    if(!cart[n]) delete cart[n];
+    update();
+  };
+  update();
+}
+
+function update(){
+  document.querySelectorAll(".qty").forEach(el=>{
+    const q = cart[el.dataset.n]||0;
+    el.innerHTML = q
+      ? `<button data-d="-1" aria-label="ቀንስ">−</button><span>${q}</span><button data-d="1" aria-label="ጨምር">+</button>`
+      : `<button class="add" data-d="1">ጨምር</button>`;
+  });
+  const count = Object.values(cart).reduce((a,b)=>a+b,0);
+  const sub = subtotal();
+  $("open").disabled = !count;
+  $("open").textContent = count ? `ጋሪ ይመልከቱ · ${count} እቃ · ${birr(sub)}` : "ጋሪ ባዶ ነው";
+}
+const subtotal = () => Object.entries(cart).reduce((s,[n,q])=>s+price[n]*q,0);
+
+$("open").onclick = () => {
+  $("lines").innerHTML = Object.entries(cart).map(([n,q])=>
+    `<div class="row"><span>${q} × ${n}</span><span>${birr(price[n]*q)}</span></div>`).join("")
+    + `<div class="row"><span>የማድረስ ክፍያ</span><span>${birr(DELIVERY_FEE)}</span></div>`;
+  $("total").textContent = birr(subtotal()+DELIVERY_FEE);
+  $("payamt").textContent = birr(subtotal()+DELIVERY_FEE);
+  $("tnum").textContent = TELEBIRR_NUMBER;
+  $("tname").textContent = TELEBIRR_NAME;
+  showPay();
+  $("dlg").showModal();
+};
+const payMode = () => document.querySelector('input[name="pay"]:checked').value;
+function showPay(){ $("telebox").style.display = payMode()==="tele" ? "block" : "none"; }
+document.querySelectorAll('input[name="pay"]').forEach(r => r.onchange = showPay);
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText(TELEBIRR_NUMBER); $("copy").textContent = "✅ ተቀድቷል"; }
+  catch(e) { $("copy").textContent = "ቁጥሩን በእጅ ይቅዱ"; }
+};
+$("close").onclick = () => $("dlg").close();
+
+$("loc").onclick = () => {
+  if(!navigator.geolocation){ $("locmsg").textContent = "ስልክዎ ቦታ መላክን አይደግፍም። አድራሻዎን በጽሑፍ ይጻፉ።"; return; }
+  $("locmsg").textContent = "ቦታ በመፈለግ ላይ...";
+  navigator.geolocation.getCurrentPosition(
+    p => { coords = [p.coords.latitude, p.coords.longitude];
+           $("locmsg").textContent = "✅ ቦታዎ ተገኝቷል፣ ከትዕዛዙ ጋር ይላካል።"; },
+    () => { $("locmsg").textContent = "ቦታ ማግኘት አልተቻለም። GPS እና ፈቃድ ያብሩ፣ ወይም አድራሻ ይጻፉ."; },
+    {enableHighAccuracy:true, timeout:15000}
+  );
+};
+
+$("send").onclick = () => {
+  const name = $("name").value.trim(), phone = $("phone").value.trim(), addr = $("addr").value.trim();
+  if(!name || !phone){ alert("እባክዎ ስምና ስልክ ቁጥር ያስገቡ።"); return; }
+  if(!addr && !coords){ alert("አድራሻ ይጻፉ ወይም ቦታዎን ይላኩ።"); return; }
+  const txid = $("txid").value.trim().toUpperCase();
+  if(payMode()==="tele" && txid.length < 6){ alert("እባክዎ የቴሌብር የግብይት ቁጥር (Transaction ID) ያስገቡ።"); return; }
+  let m = "🍔 *አዲስ ትዕዛዝ - Planet Burger and Pizza*\n\n";
+  m += Object.entries(cart).map(([n,q])=>`${q} × ${n} = ${price[n]*q} ብር`).join("\n");
+  m += `\n\nየማድረስ ክፍያ: ${DELIVERY_FEE} ብር\n*ጠቅላላ: ${subtotal()+DELIVERY_FEE} ብር*\n\n`;
+  m += `👤 ${name}\n📞 ${phone}\n`;
+  if(addr) m += `🏠 ${addr}\n`;
+  if(coords) m += `📍 https://maps.google.com/?q=${coords[0]},${coords[1]}\n`;
+  m += payMode()==="tele"
+    ? `\n💳 ክፍያ: ቴሌብር (${subtotal()+DELIVERY_FEE} ብር)\nTransaction ID: ${txid}`
+    : `\n💵 ክፍያ: ሲደርስ በጥሬ ገንዘብ`;
+  window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(m)}`, "_blank");
+};
+
+renderMenu();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
